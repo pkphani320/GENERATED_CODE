@@ -1,0 +1,14 @@
+<div class="card">
+  <div *ngIf="title" class="card-header">
+    <h3>{{title}}</h3>
+  </div>
+  <div class="card-body">
+    <div *ngIf="loading" class="flex align-items-center justify-content-center" [style.height]="height">
+      <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+      <div class="ml-2">Loading chart data...</div>
+    </div>
+    <div *ngIf="!loading" [style.width]="width" [style.height]="height">
+      <p-chart [type]="type" [data]="chartData" [options]="chartOptions"></p-chart>
+    </div>
+  </div>
+</div>

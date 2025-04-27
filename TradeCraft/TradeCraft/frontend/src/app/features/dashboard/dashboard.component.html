@@ -1,0 +1,173 @@
+<p-toast></p-toast>
+
+<div class="dashboard-container">
+  <h1>Dashboard</h1>
+  
+  <div class="grid">
+    <!-- KPI Summary Cards -->
+    <div class="col-12 lg:col-3">
+      <div class="card">
+        <div class="flex align-items-center justify-content-between mb-3">
+          <div>
+            <span class="block text-500 font-medium mb-1">Portfolio Value</span>
+            <div class="text-900 font-medium text-xl">{{portfolioSummaryData?.totalValue | currency:'USD':'symbol':'1.2-2'}}</div>
+          </div>
+          <div class="flex align-items-center justify-content-center bg-blue-100 border-round" style="width:2.5rem;height:2.5rem">
+            <i class="pi pi-dollar text-blue-500 text-xl"></i>
+          </div>
+        </div>
+        <span class="text-green-500 font-medium">{{portfolioSummaryData?.profitLossPercent}} </span>
+        <span class="text-500">since start</span>
+      </div>
+    </div>
+    
+    <div class="col-12 lg:col-3">
+      <div class="card">
+        <div class="flex align-items-center justify-content-between mb-3">
+          <div>
+            <span class="block text-500 font-medium mb-1">P&L</span>
+            <div class="text-900 font-medium text-xl">{{portfolioSummaryData?.profitLoss | currency:'USD':'symbol':'1.2-2'}}</div>
+          </div>
+          <div class="flex align-items-center justify-content-center bg-green-100 border-round" style="width:2.5rem;height:2.5rem">
+            <i class="pi pi-chart-line text-green-500 text-xl"></i>
+          </div>
+        </div>
+        <span class="text-green-500 font-medium">{{portfolioSummaryData?.profitLossPercent}} </span>
+        <span class="text-500">ROI</span>
+      </div>
+    </div>
+    
+    <div class="col-12 lg:col-3">
+      <div class="card">
+        <div class="flex align-items-center justify-content-between mb-3">
+          <div>
+            <span class="block text-500 font-medium mb-1">Cash Balance</span>
+            <div class="text-900 font-medium text-xl">{{portfolioSummaryData?.cashBalance | currency:'USD':'symbol':'1.2-2'}}</div>
+          </div>
+          <div class="flex align-items-center justify-content-center bg-orange-100 border-round" style="width:2.5rem;height:2.5rem">
+            <i class="pi pi-wallet text-orange-500 text-xl"></i>
+          </div>
+        </div>
+        <span class="text-500">Available for trading</span>
+      </div>
+    </div>
+    
+    <div class="col-12 lg:col-3">
+      <div class="card">
+        <div class="flex align-items-center justify-content-between mb-3">
+          <div>
+            <span class="block text-500 font-medium mb-1">VaR (95%)</span>
+            <div class="text-900 font-medium text-xl">{{riskMetricsData?.valueAtRisk?.daily}}</div>
+          </div>
+          <div class="flex align-items-center justify-content-center bg-purple-100 border-round" style="width:2.5rem;height:2.5rem">
+            <i class="pi pi-percentage text-purple-500 text-xl"></i>
+          </div>
+        </div>
+        <span class="text-500">Daily Value at Risk</span>
+      </div>
+    </div>
+    
+    <!-- Portfolio Performance Chart -->
+    <div class="col-12 lg:col-8">
+      <div class="card">
+        <h5>Portfolio Performance</h5>
+        <app-chart
+          [type]="'line'"
+          [data]="portfolioChartData"
+          [options]="portfolioChartOptions"
+          [loading]="portfolioLoading"
+          height="300px">
+        </app-chart>
+      </div>
+    </div>
+    
+    <!-- Risk Exposure Chart -->
+    <div class="col-12 lg:col-4">
+      <div class="card">
+        <h5>Sector Exposure</h5>
+        <app-chart
+          [type]="'pie'"
+          [data]="riskExposureData"
+          [options]="riskExposureOptions"
+          [loading]="riskLoading"
+          height="300px">
+        </app-chart>
+      </div>
+    </div>
+    
+    <!-- Recent Trades Table -->
+    <div class="col-12">
+      <app-data-table
+        [title]="'Recent Trades'"
+        [data]="recentTradesData"
+        [columns]="recentTradesColumns"
+        [loading]="tradeLoading"
+        [globalFilterFields]="['symbol', 'side', 'status']"
+        [showActions]="true"
+        (viewRow)="onViewTrade($event)">
+      </app-data-table>
+    </div>
+    
+    <!-- Risk Metrics Cards -->
+    <div class="col-12 lg:col-4" *ngIf="!riskLoading">
+      <div class="card">
+        <h5>Risk Metrics</h5>
+        <div class="p-grid">
+          <div class="p-col-6 mb-3">
+            <span class="text-500 block">Sharpe Ratio:</span>
+            <span class="text-900 font-medium">{{riskMetricsData?.sharpeRatio}}</span>
+          </div>
+          <div class="p-col-6 mb-3">
+            <span class="text-500 block">Beta:</span>
+            <span class="text-900 font-medium">{{riskMetricsData?.beta}}</span>
+          </div>
+          <div class="p-col-6 mb-3">
+            <span class="text-500 block">Volatility:</span>
+            <span class="text-900 font-medium">{{riskMetricsData?.volatility}}</span>
+          </div>
+          <div class="p-col-6 mb-3">
+            <span class="text-500 block">Weekly VaR:</span>
+            <span class="text-900 font-medium">{{riskMetricsData?.valueAtRisk?.weekly}}</span>
+          </div>
+          <div class="p-col-6 mb-3">
+            <span class="text-500 block">Monthly VaR:</span>
+            <span class="text-900 font-medium">{{riskMetricsData?.valueAtRisk?.monthly}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Portfolio Positions Summary -->
+    <div class="col-12 lg:col-8" *ngIf="!loading">
+      <div class="card">
+        <h5>Portfolio Summary</h5>
+        <div class="p-grid">
+          <div class="p-col-6 mb-3">
+            <span class="text-500 block">Total Value:</span>
+            <span class="text-900 font-medium">{{portfolioSummaryData?.totalValue | currency:'USD':'symbol':'1.2-2'}}</span>
+          </div>
+          <div class="p-col-6 mb-3">
+            <span class="text-500 block">Total Cost:</span>
+            <span class="text-900 font-medium">{{portfolioSummaryData?.totalCost | currency:'USD':'symbol':'1.2-2'}}</span>
+          </div>
+          <div class="p-col-6 mb-3">
+            <span class="text-500 block">P&L:</span>
+            <span class="text-900 font-medium">{{portfolioSummaryData?.profitLoss | currency:'USD':'symbol':'1.2-2'}} ({{portfolioSummaryData?.profitLossPercent}})</span>
+          </div>
+          <div class="p-col-6 mb-3">
+            <span class="text-500 block">Cash Balance:</span>
+            <span class="text-900 font-medium">{{portfolioSummaryData?.cashBalance | currency:'USD':'symbol':'1.2-2'}}</span>
+          </div>
+          <div class="p-col-6 mb-3">
+            <span class="text-500 block">Portfolios:</span>
+            <span class="text-900 font-medium">{{portfolioSummaryData?.portfolios}}</span>
+          </div>
+          <div class="p-col-6 mb-3">
+            <span class="text-500 block">Positions:</span>
+            <span class="text-900 font-medium">{{portfolioSummaryData?.positions}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

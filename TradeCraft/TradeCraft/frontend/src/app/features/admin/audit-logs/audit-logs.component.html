@@ -1,0 +1,141 @@
+<p-toast></p-toast>
+
+<div class="card">
+  <div class="flex justify-content-between align-items-center mb-3">
+    <h2 class="m-0">Audit Logs</h2>
+    <p-button icon="pi pi-refresh" styleClass="p-button-outlined" (onClick)="loadAuditLogs()"></p-button>
+  </div>
+  
+  <!-- Filters -->
+  <div class="grid mb-3">
+    <div class="col-12 md:col-4">
+      <span class="p-float-label">
+        <p-dropdown [options]="users" [(ngModel)]="selectedUser" optionLabel="username" [filter]="true" 
+          filterBy="username,fullName" [showClear]="true" placeholder="Select a user" styleClass="w-full">
+        </p-dropdown>
+        <label>Filter by User</label>
+      </span>
+    </div>
+    
+    <div class="col-12 md:col-4">
+      <span class="p-float-label">
+        <p-dropdown [options]="actionTypes" [(ngModel)]="selectedAction" optionLabel="name" optionValue="value" 
+          [showClear]="true" placeholder="Select action type" styleClass="w-full">
+        </p-dropdown>
+        <label>Filter by Action</label>
+      </span>
+    </div>
+    
+    <div class="col-12 md:col-4">
+      <div class="flex">
+        <p-button label="Apply Filters" icon="pi pi-filter" styleClass="p-button-primary mr-2" 
+          (onClick)="applyFilters()" [loading]="filterLoading"></p-button>
+        <p-button label="Clear" icon="pi pi-times" styleClass="p-button-secondary" 
+          (onClick)="clearFilters()" [disabled]="filterLoading"></p-button>
+      </div>
+    </div>
+  </div>
+  
+  <p-table 
+    [value]="auditLogs" 
+    [columns]="columns"
+    [lazy]="true" 
+    [paginator]="true" 
+    [rows]="rows"
+    [totalRecords]="totalRecords"
+    [loading]="loading"
+    (onLazyLoad)="loadAuditLogs($event)"
+    styleClass="p-datatable-gridlines"
+    [rowHover]="true"
+    dataKey="id"
+    [selectionMode]="'single'"
+    [(selection)]="selectedLog"
+    responsiveLayout="scroll">
+    
+    <ng-template pTemplate="header" let-columns>
+      <tr>
+        <th *ngFor="let col of columns">
+          {{col.header}}
+        </th>
+      </tr>
+    </ng-template>
+    
+    <ng-template pTemplate="body" let-log let-columns="columns">
+      <tr [pSelectableRow]="log">
+        <td *ngFor="let col of columns">
+          <ng-container [ngSwitch]="col.field">
+            <span *ngSwitchCase="'timestamp'">
+              {{formatDate(log.timestamp)}}
+            </span>
+            <span *ngSwitchCase="'action'">
+              <p-tag [value]="log.action" [severity]="
+                log.action === 'LOGIN' ? 'info' : 
+                log.action === 'LOGOUT' ? 'secondary' : 
+                log.action === 'CREATE' ? 'success' : 
+                log.action === 'UPDATE' ? 'warning' : 
+                log.action === 'DELETE' ? 'danger' : 'primary'
+              "></p-tag>
+            </span>
+            <span *ngSwitchCase="'details'">
+              {{log.details.length > 50 ? log.details.substring(0, 50) + '...' : log.details}}
+            </span>
+            <span *ngSwitchDefault>{{log[col.field]}}</span>
+          </ng-container>
+        </td>
+      </tr>
+    </ng-template>
+    
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="5" class="text-center p-4">
+          No audit logs found.
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Log Details Dialog -->
+<p-dialog 
+  *ngIf="selectedLog" 
+  [(visible)]="!!selectedLog" 
+  [style]="{width: '600px'}" 
+  [header]="'Log Details - ' + selectedLog.action" 
+  [modal]="true" 
+  [dismissableMask]="true"
+  [closable]="true">
+  
+  <div class="grid">
+    <div class="col-12 md:col-4 font-medium">Timestamp:</div>
+    <div class="col-12 md:col-8">{{formatDate(selectedLog.timestamp)}}</div>
+    
+    <div class="col-12 md:col-4 font-medium">User:</div>
+    <div class="col-12 md:col-8">{{selectedLog.username}}</div>
+    
+    <div class="col-12 md:col-4 font-medium">Action:</div>
+    <div class="col-12 md:col-8">
+      <p-tag [value]="selectedLog.action" [severity]="
+        selectedLog.action === 'LOGIN' ? 'info' : 
+        selectedLog.action === 'LOGOUT' ? 'secondary' : 
+        selectedLog.action === 'CREATE' ? 'success' : 
+        selectedLog.action === 'UPDATE' ? 'warning' : 
+        selectedLog.action === 'DELETE' ? 'danger' : 'primary'
+      "></p-tag>
+    </div>
+    
+    <div class="col-12 md:col-4 font-medium">IP Address:</div>
+    <div class="col-12 md:col-8">{{selectedLog.ip}}</div>
+    
+    <div class="col-12 md:col-4 font-medium">User Agent:</div>
+    <div class="col-12 md:col-8">{{selectedLog.userAgent}}</div>
+    
+    <div class="col-12 font-medium">Details:</div>
+    <div class="col-12 border-1 surface-border border-round p-3 bg-gray-50 white-space-pre-line">
+      {{selectedLog.details}}
+    </div>
+  </div>
+  
+  <ng-template pTemplate="footer">
+    <button pButton pRipple label="Close" icon="pi pi-times" class="p-button-text" (click)="selectedLog = null"></button>
+  </ng-template>
+</p-dialog>

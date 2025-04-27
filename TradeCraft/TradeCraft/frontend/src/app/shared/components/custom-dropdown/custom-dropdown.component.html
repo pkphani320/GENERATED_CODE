@@ -1,0 +1,12 @@
+<p-dropdown 
+  [options]="options" 
+  [(ngModel)]="selectedOption" 
+  [optionLabel]="optionLabel" 
+  [optionValue]="optionValue"
+  [placeholder]="placeholder" 
+  [disabled]="disabled" 
+  [filter]="filter" 
+  [showClear]="showClear"
+  (onChange)="handleChange($event)"
+  styleClass="w-full">
+</p-dropdown>

@@ -1,0 +1,169 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="card">
+  <div class="flex justify-content-between align-items-center mb-3">
+    <h2 class="m-0">User Management</h2>
+    <p-button label="New User" icon="pi pi-plus" (onClick)="openNew()"></p-button>
+  </div>
+  
+  <p-table 
+    [value]="users" 
+    [columns]="columns"
+    [lazy]="true" 
+    [paginator]="true" 
+    [rows]="rows"
+    [totalRecords]="totalRecords"
+    [loading]="loading"
+    (onLazyLoad)="loadUsers($event)"
+    styleClass="p-datatable-gridlines"
+    [rowHover]="true"
+    dataKey="id"
+    responsiveLayout="scroll">
+    
+    <ng-template pTemplate="header" let-columns>
+      <tr>
+        <th *ngFor="let col of columns">
+          {{col.header}}
+        </th>
+        <th style="width: 120px">Actions</th>
+      </tr>
+    </ng-template>
+    
+    <ng-template pTemplate="body" let-user let-columns="columns">
+      <tr>
+        <td *ngFor="let col of columns">
+          <ng-container [ngSwitch]="col.field">
+            <span *ngSwitchCase="'roles'">
+              <p-chip *ngFor="let role of user.roles" [label]="role" [styleClass]="role === 'ADMIN' ? 'bg-primary' : role === 'TRADER' ? 'bg-success' : 'bg-info'" class="mr-1"></p-chip>
+            </span>
+            <span *ngSwitchCase="'organizationName'">
+              {{getOrganizationName(user.organizationId)}}
+            </span>
+            <span *ngSwitchDefault>{{user[col.field]}}</span>
+          </ng-container>
+        </td>
+        <td>
+          <div class="flex">
+            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-success p-button-text mr-1" (click)="openEdit(user)"></button>
+            <button pButton pRipple icon="pi pi-key" class="p-button-rounded p-button-info p-button-text mr-1" (click)="openPasswordDialog(user)"></button>
+            <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text" (click)="confirmDelete(user)"></button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+    
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="6" class="text-center p-4">
+          No users found.
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- User Dialog -->
+<p-dialog [(visible)]="userDialog" [style]="{width: '600px'}" header="User Details" [modal]="true" styleClass="p-fluid" [closable]="!submitting" [closeOnEscape]="!submitting">
+  <form [formGroup]="userForm">
+    <div class="formgrid grid">
+      <div class="field col-12 md:col-6">
+        <label for="username">Username</label>
+        <input type="text" pInputText id="username" formControlName="username" [disabled]="!!userForm.value.id" />
+        <small class="p-error" *ngIf="userForm.get('username')?.invalid && userForm.get('username')?.dirty">
+          Username is required.
+        </small>
+      </div>
+      
+      <div class="field col-12 md:col-6" *ngIf="!userForm.value.id">
+        <label for="password">Password</label>
+        <input type="password" pInputText id="password" formControlName="password" />
+        <small class="p-error" *ngIf="userForm.get('password')?.invalid && userForm.get('password')?.dirty">
+          Password is required for new users.
+        </small>
+      </div>
+      
+      <div class="field col-12 md:col-6">
+        <label for="firstName">First Name</label>
+        <input type="text" pInputText id="firstName" formControlName="firstName" />
+        <small class="p-error" *ngIf="userForm.get('firstName')?.invalid && userForm.get('firstName')?.dirty">
+          First name is required.
+        </small>
+      </div>
+      
+      <div class="field col-12 md:col-6">
+        <label for="lastName">Last Name</label>
+        <input type="text" pInputText id="lastName" formControlName="lastName" />
+        <small class="p-error" *ngIf="userForm.get('lastName')?.invalid && userForm.get('lastName')?.dirty">
+          Last name is required.
+        </small>
+      </div>
+      
+      <div class="field col-12">
+        <label for="email">Email</label>
+        <input type="email" pInputText id="email" formControlName="email" />
+        <small class="p-error" *ngIf="userForm.get('email')?.invalid && userForm.get('email')?.dirty">
+          Valid email is required.
+        </small>
+      </div>
+      
+      <div class="field col-12">
+        <label for="roles">Roles</label>
+        <p-multiSelect id="roles" [options]="roles" formControlName="roles" optionLabel="name" optionValue="value" defaultLabel="Select roles"></p-multiSelect>
+        <small class="p-error" *ngIf="userForm.get('roles')?.invalid && userForm.get('roles')?.dirty">
+          At least one role is required.
+        </small>
+      </div>
+      
+      <div class="field col-12">
+        <label for="organizationId">Organization</label>
+        <p-dropdown id="organizationId" [options]="organizations" formControlName="organizationId" optionLabel="name" optionValue="id" [filter]="true" filterBy="name" [showClear]="true" placeholder="Select organization"></p-dropdown>
+      </div>
+    </div>
+  </form>
+  
+  <ng-template pTemplate="footer">
+    <button pButton pRipple label="Cancel" icon="pi pi-times" class="p-button-text" (click)="userDialog = false" [disabled]="submitting"></button>
+    <button pButton pRipple label="Save" icon="pi pi-check" class="p-button-text" (click)="saveUser()" [loading]="submitting"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Change Password Dialog -->
+<p-dialog [(visible)]="passwordDialog" [style]="{width: '450px'}" header="Change Password" [modal]="true" styleClass="p-fluid" [closable]="!submitting" [closeOnEscape]="!submitting">
+  <form [formGroup]="changePasswordForm">
+    <div class="field">
+      <label for="currentPassword">Current Password</label>
+      <input type="password" pInputText id="currentPassword" formControlName="currentPassword" />
+      <small class="p-error" *ngIf="changePasswordForm.get('currentPassword')?.invalid && changePasswordForm.get('currentPassword')?.dirty">
+        Current password is required.
+      </small>
+    </div>
+    
+    <div class="field">
+      <label for="newPassword">New Password</label>
+      <input type="password" pInputText id="newPassword" formControlName="newPassword" />
+      <small class="p-error" *ngIf="changePasswordForm.get('newPassword')?.errors?.['required'] && changePasswordForm.get('newPassword')?.dirty">
+        New password is required.
+      </small>
+      <small class="p-error" *ngIf="changePasswordForm.get('newPassword')?.errors?.['minlength'] && changePasswordForm.get('newPassword')?.dirty">
+        Password must be at least 6 characters.
+      </small>
+    </div>
+    
+    <div class="field">
+      <label for="confirmPassword">Confirm Password</label>
+      <input type="password" pInputText id="confirmPassword" formControlName="confirmPassword" />
+      <small class="p-error" *ngIf="changePasswordForm.get('confirmPassword')?.errors?.['required'] && changePasswordForm.get('confirmPassword')?.dirty">
+        Confirm your password.
+      </small>
+      <small class="p-error" *ngIf="changePasswordForm.errors?.['mismatch'] && changePasswordForm.get('confirmPassword')?.dirty">
+        Passwords don't match.
+      </small>
+    </div>
+  </form>
+  
+  <ng-template pTemplate="footer">
+    <button pButton pRipple label="Cancel" icon="pi pi-times" class="p-button-text" (click)="passwordDialog = false" [disabled]="submitting"></button>
+    <button pButton pRipple label="Save" icon="pi pi-check" class="p-button-text" (click)="changePassword()" [loading]="submitting"></button>
+  </ng-template>
+</p-dialog>

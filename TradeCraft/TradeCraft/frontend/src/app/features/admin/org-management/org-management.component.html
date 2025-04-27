@@ -1,0 +1,195 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="card">
+  <div class="flex justify-content-between align-items-center mb-3">
+    <h2 class="m-0">Organization Management</h2>
+    <p-button label="New Organization" icon="pi pi-plus" (onClick)="openNew()"></p-button>
+  </div>
+  
+  <p-table 
+    [value]="organizations" 
+    [columns]="columns"
+    [lazy]="true" 
+    [paginator]="true" 
+    [rows]="rows"
+    [totalRecords]="totalRecords"
+    [loading]="loading"
+    (onLazyLoad)="loadOrganizations($event)"
+    styleClass="p-datatable-gridlines"
+    [rowHover]="true"
+    dataKey="id"
+    responsiveLayout="scroll">
+    
+    <ng-template pTemplate="header" let-columns>
+      <tr>
+        <th *ngFor="let col of columns">
+          {{col.header}}
+        </th>
+        <th style="width: 150px">Actions</th>
+      </tr>
+    </ng-template>
+    
+    <ng-template pTemplate="body" let-org let-columns="columns">
+      <tr>
+        <td *ngFor="let col of columns">
+          <ng-container [ngSwitch]="col.field">
+            <span *ngSwitchCase="'active'">
+              <p-tag [value]="org.active ? 'Active' : 'Inactive'" [severity]="org.active ? 'success' : 'danger'"></p-tag>
+            </span>
+            <span *ngSwitchDefault>{{org[col.field]}}</span>
+          </ng-container>
+        </td>
+        <td>
+          <div class="flex">
+            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-success p-button-text mr-1" (click)="openEdit(org)"></button>
+            <button pButton pRipple icon="pi pi-users" class="p-button-rounded p-button-info p-button-text mr-1" (click)="viewUsers(org)"></button>
+            <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text" (click)="confirmDelete(org)"></button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+    
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="5" class="text-center p-4">
+          No organizations found.
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Organization Users View -->
+<div *ngIf="selectedOrganization" class="card mt-3">
+  <div class="flex justify-content-between align-items-center mb-3">
+    <h3 class="m-0">Users in {{selectedOrganization.name}}</h3>
+    <p-button label="Assign User" icon="pi pi-plus" (onClick)="openAssignUserDialog()"></p-button>
+  </div>
+  
+  <p-table 
+    [value]="users" 
+    [columns]="userColumns"
+    [loading]="usersLoading"
+    styleClass="p-datatable-gridlines"
+    [rowHover]="true"
+    dataKey="id">
+    
+    <ng-template pTemplate="header" let-columns>
+      <tr>
+        <th *ngFor="let col of columns">
+          {{col.header}}
+        </th>
+        <th style="width: 100px">Actions</th>
+      </tr>
+    </ng-template>
+    
+    <ng-template pTemplate="body" let-user let-columns="columns">
+      <tr>
+        <td *ngFor="let col of columns">
+          <ng-container [ngSwitch]="col.field">
+            <span *ngSwitchCase="'roles'">
+              <p-chip *ngFor="let role of user.roles" [label]="role" [styleClass]="role === 'ADMIN' ? 'bg-primary' : role === 'TRADER' ? 'bg-success' : 'bg-info'" class="mr-1"></p-chip>
+            </span>
+            <span *ngSwitchDefault>{{user[col.field]}}</span>
+          </ng-container>
+        </td>
+        <td>
+          <button pButton pRipple icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text" (click)="confirmRemoveUser(user)"></button>
+        </td>
+      </tr>
+    </ng-template>
+    
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="5" class="text-center p-4">
+          No users in this organization.
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Organization Dialog -->
+<p-dialog [(visible)]="organizationDialog" [style]="{width: '600px'}" header="Organization Details" [modal]="true" styleClass="p-fluid" [closable]="!submitting" [closeOnEscape]="!submitting">
+  <form [formGroup]="organizationForm">
+    <div class="field">
+      <label for="name">Name</label>
+      <input type="text" pInputText id="name" formControlName="name" />
+      <small class="p-error" *ngIf="organizationForm.get('name')?.invalid && organizationForm.get('name')?.dirty">
+        Name is required.
+      </small>
+    </div>
+    
+    <div class="field">
+      <label for="description">Description</label>
+      <textarea pInputTextarea id="description" formControlName="description" rows="3"></textarea>
+    </div>
+    
+    <div class="formgrid grid">
+      <div class="field col-12 md:col-6">
+        <label for="contactEmail">Contact Email</label>
+        <input type="email" pInputText id="contactEmail" formControlName="contactEmail" />
+        <small class="p-error" *ngIf="organizationForm.get('contactEmail')?.invalid && organizationForm.get('contactEmail')?.dirty">
+          Please enter a valid email.
+        </small>
+      </div>
+      
+      <div class="field col-12 md:col-6">
+        <label for="contactPhone">Contact Phone</label>
+        <input type="text" pInputText id="contactPhone" formControlName="contactPhone" />
+      </div>
+    </div>
+    
+    <div class="field">
+      <label for="address">Address</label>
+      <textarea pInputTextarea id="address" formControlName="address" rows="2"></textarea>
+    </div>
+    
+    <div class="field-checkbox">
+      <p-checkbox formControlName="active" [binary]="true" inputId="active"></p-checkbox>
+      <label for="active">Active</label>
+    </div>
+  </form>
+  
+  <ng-template pTemplate="footer">
+    <button pButton pRipple label="Cancel" icon="pi pi-times" class="p-button-text" (click)="organizationDialog = false" [disabled]="submitting"></button>
+    <button pButton pRipple label="Save" icon="pi pi-check" class="p-button-text" (click)="saveOrganization()" [loading]="submitting"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Assign User Dialog -->
+<p-dialog [(visible)]="assignUserDialog" [style]="{width: '500px'}" header="Assign User to Organization" [modal]="true" styleClass="p-fluid">
+  <div class="field">
+    <label for="user">Select User</label>
+    <p-table [value]="availableUsers" styleClass="p-datatable-sm" [rowHover]="true">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Username</th>
+          <th>Full Name</th>
+          <th>Action</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-user>
+        <tr>
+          <td>{{user.username}}</td>
+          <td>{{user.fullName}}</td>
+          <td>
+            <button pButton pRipple icon="pi pi-plus" class="p-button-rounded p-button-success p-button-sm" (click)="assignUser(user.id)"></button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="3" class="text-center p-4">
+            No available users to assign.
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+  
+  <ng-template pTemplate="footer">
+    <button pButton pRipple label="Close" icon="pi pi-times" class="p-button-text" (click)="assignUserDialog = false"></button>
+  </ng-template>
+</p-dialog>

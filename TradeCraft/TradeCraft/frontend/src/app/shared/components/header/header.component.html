@@ -1,0 +1,12 @@
+<div class="header p-3 surface-0 shadow-1 flex justify-content-between align-items-center">
+  <div class="flex align-items-center">
+    <button pButton pRipple type="button" icon="pi pi-bars" class="p-button-rounded p-button-text" (click)="toggleSidebar()"></button>
+    <h2 class="ml-3 my-0">Trading Platform</h2>
+  </div>
+  
+  <div class="flex align-items-center">
+    <span class="mr-3" *ngIf="currentUser">Hi, {{currentUser.firstName || currentUser.username}}</span>
+    <p-menu #menu [popup]="true" [model]="userMenuItems"></p-menu>
+    <button pButton pRipple type="button" icon="pi pi-user" class="p-button-rounded p-button-text" (click)="menu.toggle($event)"></button>
+  </div>
+</div>

@@ -1,0 +1,12 @@
+<button 
+  pButton 
+  [type]="'button'" 
+  [label]="label" 
+  [icon]="icon" 
+  [class]="styleClass" 
+  [disabled]="disabled || loading" 
+  (click)="handleClick($event)"
+  [pTooltip]="tooltip" 
+  [tooltipPosition]="tooltipPosition">
+  <i *ngIf="loading" class="pi pi-spin pi-spinner" style="margin-right: 0.5rem;"></i>
+</button>
